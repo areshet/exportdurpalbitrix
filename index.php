@@ -5,7 +5,7 @@ class DbTCsv
     private $host = '192.168.0.106';
     private $user = 'root';
     private $password = '';
-    private $dbname = 'lady_charm_old';
+    private $dbname = 'ladydb';
 
     private function dbconnect()
     {
@@ -146,12 +146,14 @@ class DbTCsv
         $class = new DbTCsv();
         $db = $class->dbconnect();
         $ids = [];
+        $chars = ')(+"';
         $query = "SELECT vid FROM uc_products";
         $result = $db->query($query);
         while ($row = $result->fetch_assoc()) {
             $ids[] = $row['vid'];
         }
-        foreach ($ids as $id) {
+        foreach ($ids as $key => $id) {
+            $article = 10000 + $key;
             $catid = self::category();
             $exception = [206,205,339,38,97];
             if(empty($catid[$id])) continue;
@@ -163,9 +165,9 @@ class DbTCsv
             $arr[$id] += ['IE_PREVIEW_PICTURE' => self::getImage($id)];
             $arr[$id] += ['IE_DETAIL_TEXT' => ' '];
             $arr[$id] += ['IE_DETAIL_PICTURE' => self::getImage($id)];
-            $arr[$id] += ['IP_PROP15' => self::getNameCategory($catid[$id]) . $id];
+            $arr[$id] += ['IP_PROP15' => $article ];
             $arr[$id] += ['IP_PROP16' => self::getBrand($id)];
-            $arr[$id] += ['IE_CODE' => self::getName($id) . $id];
+            $arr[$id] += ['IE_CODE' => strtolower(self::transliterate(preg_replace('/['.$chars.']/','',self::getName($id)) .'-'. $id))];
             $arr[$id] += ['IC_GROUP0' => self::categoryPath($catid[$id])[0]];
             $arr[$id] += ['IC_GROUP1' => self::categoryPath($catid[$id])[1]];
             $arr[$id] += ['IC_GROUP2' => ' '];
@@ -267,7 +269,7 @@ class DbTCsv
             401 => ['Àêñåññóàðû','Ïåð÷àòêè è âàðåæêè'],
             // Äðóãîå
             300 => ['Êîøåëüêè, Êëþ÷íèöû, Îáëîæêè', ''],
-            418 => ['Øàïêè, Êåïêè, Øëÿïû', ''],
+            418 => ['Àêñåññóàðû', 'Ãîëîâíûå óáîðû'],
 
             //Èñêëþ÷åíèå
             /**
@@ -283,12 +285,38 @@ class DbTCsv
         return;
     }
 
+    public static function transliterate($st) {
+        $st = strtr($st,
+            "àáâãäåæçèéêëìíîïðñòóôûýÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÛÝ",
+            "abvgdegziyklmnoprstufieABVGDEGZIYKLMNOPRSTUFIE "
+        );
+        $st = strtr($st, array(
+            '¸'=>"yo",    'õ'=>"h",  'ö'=>"ts",  '÷'=>"ch", 'ø'=>"sh",
+            'ù'=>"shch",  'ú'=>'',   'ü'=>'',    'þ'=>"yu", 'ÿ'=>"ya",
+            '¨'=>"Yo",    'Õ'=>"H",  'Ö'=>"Ts",  '×'=>"Ch", 'Ø'=>"Sh",
+            'Ù'=>"Shch",  'Ú'=>'',   'Ü'=>'',    'Þ'=>"Yu", 'ß'=>"Ya",
+            ' '=>"-",
+        ));
+        return $st;
+    }
+
+    public static function getArtikle($catid,$id){
+        $mansCat = [410,409,402,408,407,406,405,404,403,259];
+        $name = self::getName($id);
+        if (in_array($catid,$mansCat)){
+            return $name.' Ì0'.$id;
+        }else{
+            return  $name.' Æ0'.$id;
+        }
+    }
+
     public static function getProductsCategoty($catid)
     {
         $class = new DbTCsv();
         $db = $class->dbconnect();
         $ids = [];
         $arr = [];
+        $chars = ')(+"';
         $query = "SELECT entity_id from field_revision_taxonomy_catalog WHERE taxonomy_catalog_tid = " . $catid;
         $result = $db->query($query);
         while ($row = $result->fetch_assoc()) {
@@ -301,9 +329,10 @@ class DbTCsv
             $arr[$id] += ['IE_PREVIEW_TEXT' => self::getDescription($id)];
             $arr[$id] += ['IE_PREVIEW_PICTURE' => self::getImage($id)];
             $arr[$id] += ['IE_DETAIL_TEXT' => ' '];
-            $arr[$id] += ['IP_PROP15' => self::getNameCategory($catid) . $id];
+            $arr[$id] += ['IE_DETAIL_PICTURE' => self::getImage($id)];
+            $arr[$id] += ['IP_PROP15' => self::getArtikle($catid,$id)];
             $arr[$id] += ['IP_PROP16' => self::getBrand($id)];
-            $arr[$id] += ['IE_CODE' => self::getName($id) . $id];
+            $arr[$id] += ['IE_CODE' => strtolower(self::transliterate(preg_replace('/['.$chars.']/','',self::getName($id)) .'-'. $id))];
             $arr[$id] += ['IC_GROUP0' => self::categoryPath($catid)[0]];
             $arr[$id] += ['IC_GROUP1' => self::categoryPath($catid)[1]];
             $arr[$id] += ['IC_GROUP2' => ' '];
@@ -318,5 +347,5 @@ class DbTCsv
 require_once 'RecordCsv.php';
 $record = new RecordCsv();
 $record->record(DbTCsv::getAllProducts());
-/*$id = 300 ;
+/*$id = 427;
 $record->recordCategoty(DbTCsv::getProductsCategoty($id),$id);*/
