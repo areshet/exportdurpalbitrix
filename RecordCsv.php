@@ -3,7 +3,9 @@
 class RecordCsv
 {
     private $path = 'importAll.csv';
+    private $pathusers = 'users.csv';
     const HEAD = ['IE_XML_ID', 'IE_NAME', 'IE_ACTIVE', 'IE_PREVIEW_TEXT', 'IE_PREVIEW_PICTURE', 'IE_DETAIL_TEXT','IE_DETAIL_PICTURE', 'IP_PROP15', 'IP_PROP16', 'IE_CODE', 'IC_GROUP0', 'IC_GROUP1', 'IC_GROUP2', 'CP_QUANTITY', 'CV_PRICE_1', 'CV_CURRENCY_1'];
+    const HEADERUSERS = ['LOGIN','PASSWORD','ACTIVE','NAME','LAST_NAME','EMAIL'];
 
     public function record($category)
     {
@@ -28,6 +30,21 @@ class RecordCsv
         $fp = fopen($path, 'w');
         fputcsv($fp, self::HEAD, ';');
         foreach ($category as $row) {
+            if (fputcsv($fp, $row, ';')) {
+                $i++;
+            } else {
+                continue;
+            }
+        }
+        fclose($fp);
+        echo "Added " . $i . " lines";
+    }
+    public function recordUsers($users)
+    {
+        $i = 0;
+        $fp = fopen($this->pathusers, 'w');
+        fputcsv($fp, self::HEADERUSERS, ';');
+        foreach ($users as $row) {
             if (fputcsv($fp, $row, ';')) {
                 $i++;
             } else {

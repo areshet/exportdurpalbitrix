@@ -5,7 +5,7 @@ class DbTCsv
     private $host = '192.168.0.106';
     private $user = 'root';
     private $password = '';
-    private $dbname = 'ladydb';
+    private $dbname = 'lady_charm_old';
 
     private function dbconnect()
     {
@@ -342,10 +342,47 @@ class DbTCsv
         }
         return $arr;
     }
+
+    /**
+     * get users ***
+     */
+
+    public static function getUsers(){
+        $class = new DbTCsv();
+        $db = $class->dbconnect();
+        $users = [];
+        $arr = [];
+        $i = 0;
+        $query = "SELECT * from users";
+        $result = $db->query($query);
+        while ($row = $result->fetch_assoc()) {
+            $users[$row['uid']]['LOGIN'] = $row['name'];
+            $users[$row['uid']]['MAIL'] = $row['mail'];
+        }
+
+        foreach ($users as $user){
+            if (empty($user['LOGIN']) || $user['LOGIN'] == 'admin') continue;
+            $arr[$i]  = ['LOGIN' => $user['LOGIN']];
+            $arr[$i] += ['PASSWORD' => 'ladycharm'];
+            $arr[$i] += ['ACTIVE' => 'Y'];
+            $arr[$i] += ['NAME' =>  $user['LOGIN']];
+            $arr[$i] += ['LAST_NAME' => 'Не заполнено'];
+            $arr[$i] += ['EMAIL' => $user['MAIL']];
+            $i++;
+        }
+
+        return $arr;
+
+    }
+
+
 }
 
 require_once 'RecordCsv.php';
 $record = new RecordCsv();
-$record->record(DbTCsv::getAllProducts());
+$users = DbTCsv::getUsers();
+DbTCsv::getUsers();
+$record-> recordUsers($users);
+//$record->record(DbTCsv::getAllProducts());
 /*$id = 427;
 $record->recordCategoty(DbTCsv::getProductsCategoty($id),$id);*/
